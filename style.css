@@ -31,8 +31,9 @@ img { display: block; }
 }
 .brand { font-weight: 700; color: var(--text); font-size: 17px; }
 .meta { font-size: 12px; color: var(--muted); margin-left: auto; text-align: right; }
-main { max-width: 760px; margin: 0 auto; padding: 12px 16px 24px; }
-.foot { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12px; }
+main { padding: 12px 16px 24px; }
+@media (min-width: 900px) { main, .foot, .top { padding-left: 24px; padding-right: 24px; } }
+.foot { padding: 8px 16px 32px; font-size: 12px; }
 
 /* home */
 .search {
@@ -109,3 +110,16 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .more { display: block; width: 100%; margin-top: 8px; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); font-size: 13px; }
 .list { display: flex; flex-direction: column; gap: 8px; }
 .legend { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* wide layout: champion info + build on the left, augments fill the rest */
+.champ { display: grid; grid-template-areas: "head" "augs" "side"; }
+.c-head { grid-area: head; } .c-augs { grid-area: augs; } .c-side { grid-area: side; }
+#augs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); column-gap: 20px; }
+#augs .aug:first-child { border-top: 1px solid var(--line); }
+.c-augs .search.sm { max-width: 420px; }
+@media (min-width: 900px) {
+  .champ { grid-template-columns: 320px 1fr; grid-template-rows: auto 1fr; column-gap: 16px;
+           grid-template-areas: "head augs" "side augs"; align-items: start; }
+  .c-augs { margin-bottom: 0; }
+}
+@media (min-width: 900px) { #q { max-width: 480px; } .grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); } }

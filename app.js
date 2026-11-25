@@ -98,14 +98,15 @@ const SORTS = {
   name: { label: 'A–Z', fn: (x, y) => x.name.localeCompare(y.name) },
 };
 const RAR = { prismatic: 3, gold: 2, silver: 1 };
-const AUG_SHOW = 20;
+const augShow = () => (innerWidth >= 1400 ? 45 : innerWidth >= 900 ? 30 : 20);
 
 function renderChamp(d) {
   const fav = favs().has(d.slug), hid = hidden().has(d.slug);
   let sort = 'rank';
   try { sort = SORTS[localStorage.getItem('mayhem.sort')] ? localStorage.getItem('mayhem.sort') : 'rank'; } catch { /* ignore */ }
 
-  app.innerHTML = `
+  app.innerHTML = `<div class="champ">
+    <div class="c-head">
     <a class="back" href="#/">‹ All champions</a>
     <div class="hero">
       <img src="${champIcon(d.id)}" alt="">
@@ -118,8 +119,9 @@ function renderChamp(d) {
         <button class="iconbtn ${hid ? 'on' : ''}" id="hide" title="Hide from list">${hid ? 'Unhide' : 'Hide'}</button>
       </div>
     </div>
+    </div>
 
-    <div class="card">
+    <div class="card c-augs">
       <h3>Augments <span class="muted">${d.augments.length} · # = op.gg rank · T = Blitz tier</span></h3>
       <input id="aq" class="search sm" type="search" placeholder="Search augments…" autocomplete="off">
       <div class="filters"><span class="flbl">Sort</span>${Object.entries(SORTS).map(([k, v]) =>
@@ -130,6 +132,7 @@ function renderChamp(d) {
       <button class="more" id="augmore"></button>
     </div>
 
+    <div class="c-side">
     <div class="card">
       <h3>Core build <span class="muted">op.gg #1</span></h3>
       ${d.core[0] ? itemRow(d.core[0], true) : '<span class="muted">No data</span>'}
@@ -139,7 +142,8 @@ function renderChamp(d) {
     <p class="legend">${[1, 2, 3, 4, 5].map(tierBadge).join('')} Blitz Mayhem tier, 1 = best ·
       <a href="https://op.gg/lol/modes/aram-mayhem/${d.slug}/augments" target="_blank" rel="noopener">op.gg</a> ·
       <a href="https://blitz.gg/lol/champions/${d.id}/aram-mayhem" target="_blank" rel="noopener">Blitz</a></p>
-  `;
+    </div>
+  </div>`;
 
   let filter = 'all', expanded = false, q = '';
   const box = document.getElementById('augs'), more = document.getElementById('augmore');
@@ -149,7 +153,7 @@ function renderChamp(d) {
       .filter(a => filter === 'all' || a.rarity === filter)
       .filter(a => !ql || a.name.toLowerCase().includes(ql) || (state.descs[a.name] || '').toLowerCase().includes(ql))
       .sort(SORTS[sort].fn);
-    const shown = expanded || ql ? list : list.slice(0, AUG_SHOW);
+    const shown = expanded || ql ? list : list.slice(0, augShow());
     box.innerHTML = shown.map(augRow).join('') || '<span class="muted">None.</span>';
     more.hidden = shown.length === list.length && !expanded;
     more.textContent = expanded ? 'Show fewer' : `Show all ${list.length}`;
