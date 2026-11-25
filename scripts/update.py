@@ -3,8 +3,7 @@
 
 Sources (public pages only, fetched politely one at a time):
   - Riot Data Dragon: patch, champion list, champion icons
-  - op.gg ARAM: Mayhem pages: ranked augments, items, core builds, boots,
-    starters, summoner spells, skill order
+  - op.gg ARAM: Mayhem pages: ranked augments, #1 core build, top boots
   - Blitz ARAM: Mayhem page: per-champion augment/item tiers (1 = best),
     overall champion tier, augment descriptions and rarity
 
@@ -214,26 +213,6 @@ def single_item_rows(table):
 
 # ---------------------------------------------------------------- op.gg
 
-def parse_opgg_build(src):
-    dom = DOM(src)
-    tabs = tables_by_heading(dom)
-    spells = []
-    for t in tabs.get("summoner spells", []):
-        pair = [{"name": i.attrs.get("alt", ""),
-                 "icon": clean_src(i.attrs.get("src"))} for i in t.iter("img")]
-        if pair:
-            spells.append(pair)
-    skills = {"priority": [], "order": []}
-    st = tabs.get("skill order", [])
-    if st:
-        keys = [s.text() for s in st[0].iter("strong") if s.text() in "QWER"]
-        skills["priority"] = keys[:3]
-        skills["order"] = keys[3:]
-    if not spells or not skills["order"]:
-        raise ValueError("op.gg build page: spells/skills not found")
-    return {"spells": spells, "skills": skills}
-
-
 def parse_opgg_items(src):
     dom = DOM(src)
     tabs = tables_by_heading(dom)
@@ -246,9 +225,7 @@ def parse_opgg_items(src):
         raise ValueError("op.gg items page: core builds not found")
     out = {
         "core": item_rows(core),
-        "starters": item_rows(first("starter items")) if first("starter items") else [],
         "boots": single_item_rows(first("boots")) if first("boots") else [],
-        "items": single_item_rows(first("items")) if first("items") else [],
     }
     if not out["core"]:
         raise ValueError("op.gg items page: empty core builds")
@@ -349,7 +326,6 @@ def write_json(path, obj):
 
 def build_champion(f, champ, aug_db, cd_augs):
     slug = champ["id"].lower()
-    build = parse_opgg_build(f.get(OPGG.format(slug=slug, page="build")))
     items = parse_opgg_items(f.get(OPGG.format(slug=slug, page="items")))
     augs = parse_opgg_augments(f.get(OPGG.format(slug=slug, page="augments")))
 
@@ -390,9 +366,8 @@ def build_champion(f, champ, aug_db, cd_augs):
     def tier_of(iid):
         return (item_tier.get(str(iid)) or {}).get("tier")
 
-    for lst in (items["boots"], items["items"]):
-        for it in lst:
-            it["tier"] = tier_of(it["id"])
+    for it in items["boots"]:
+        it["tier"] = tier_of(it["id"])
 
     return {
         "id": champ["id"],
@@ -400,12 +375,8 @@ def build_champion(f, champ, aug_db, cd_augs):
         "name": champ["name"],
         "tier": btiers.get("tier"),
         "patch": (bchamp or {}).get("patch"),
-        "spells": build["spells"],
-        "skills": build["skills"],
-        "starters": items["starters"],
-        "boots": items["boots"],
-        "core": items["core"],
-        "items": items["items"],
+        "boots": items["boots"][:3],
+        "core": items["core"][:1],
         "augments": aug_out,
         "updated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d"),
     }

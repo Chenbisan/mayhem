@@ -74,8 +74,6 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .card h3 .muted { font-weight: 400; font-size: 12px; }
 .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .row + .row { margin-top: 8px; }
-.split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media (max-width: 420px) { .split { grid-template-columns: 1fr; } }
 .lbl { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 .rank { font-size: 12px; color: var(--muted); width: 18px; text-align: right; flex: none; }
 
@@ -90,12 +88,10 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .t1 { background: var(--t1); color: #1a1200; } .t2 { background: var(--t2); } .t3 { background: var(--t3); }
 .t4 { background: var(--t4); } .t5 { background: var(--t5); }
 
-.skills { display: flex; gap: 3px; flex-wrap: wrap; }
-.sk { width: 24px; height: 24px; border-radius: 5px; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--panel2); }
-.sk.Q { color: #4f9cf5; } .sk.W { color: #4cc38a; } .sk.E { color: #e2b84a; } .sk.R { background: var(--accent); color: #1a1200; }
-.prio { font-weight: 700; font-size: 16px; letter-spacing: .04em; }
-
-.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.flbl { font-size: 12px; color: var(--muted); width: 34px; }
+.search.sm { padding: 8px 12px; font-size: 15px; margin-bottom: 10px; }
+.aug .rank { padding-top: 9px; }
 .aug { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); align-items: flex-start; cursor: pointer; }
 .aug:first-child { border-top: 0; }
 .aug img { width: 36px; height: 36px; border-radius: 6px; border: 2px solid var(--line); background: #000; flex: none; }
@@ -108,7 +104,4 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .aug.open .desc { display: block; }
 .more { display: block; width: 100%; margin-top: 8px; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); font-size: 13px; }
 .list { display: flex; flex-direction: column; gap: 8px; }
-.ilist { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.irow { display: flex; gap: 8px; align-items: center; font-size: 13px; min-width: 0; }
-.irow span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .legend { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }

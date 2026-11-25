@@ -91,13 +91,19 @@ function augRow(a) {
     </div></div>`;
 }
 
+const SORTS = {
+  rank: { label: 'Rank', fn: (x, y) => x.rank - y.rank },
+  tier: { label: 'Tier', fn: (x, y) => (x.tier || 9) - (y.tier || 9) || x.rank - y.rank },
+  rarity: { label: 'Rarity', fn: (x, y) => (RAR[y.rarity] || 0) - (RAR[x.rarity] || 0) || x.rank - y.rank },
+  name: { label: 'A–Z', fn: (x, y) => x.name.localeCompare(y.name) },
+};
+const RAR = { prismatic: 3, gold: 2, silver: 1 };
+const AUG_SHOW = 20;
+
 function renderChamp(d) {
   const fav = favs().has(d.slug), hid = hidden().has(d.slug);
-  const sk = d.skills || { priority: [], order: [] };
-  const spell = p => p.map(s => `<span class="it sm" title="${esc(s.name)}"><img alt="${esc(s.name)}"
-      src="${DD}/${state.meta.ddragon}/img/spell/${esc(s.icon.split('/').pop())}"
-      onerror="this.onerror=null;this.src='${esc(s.icon)}'"></span>`).join('');
-  const AUG_SHOW = 15;
+  let sort = 'rank';
+  try { sort = SORTS[localStorage.getItem('mayhem.sort')] ? localStorage.getItem('mayhem.sort') : 'rank'; } catch { /* ignore */ }
 
   app.innerHTML = `
     <div class="hero">
@@ -113,58 +119,53 @@ function renderChamp(d) {
     </div>
 
     <div class="card">
-      <h3>Core build <span class="muted">op.gg #1</span></h3>
-      ${d.core[0] ? itemRow(d.core[0], true) : '<span class="muted">No data</span>'}
-      <div class="split" style="margin-top:12px">
-        <div><div class="lbl">Boots</div>${itemRow(d.boots.slice(0, 3))}</div>
-        <div><div class="lbl">Starter</div>${(d.starters || []).slice(0, 2).map(r => itemRow(r)).join('')}</div>
-      </div>
-      <div class="split" style="margin-top:12px">
-        <div><div class="lbl">Summoners</div>${(d.spells || []).slice(0, 2).map(p => `<div class="row">${spell(p)}</div>`).join('')}</div>
-        <div><div class="lbl">Skill max</div><div class="prio">${sk.priority.join(' › ')}</div></div>
-      </div>
-      ${sk.order.length ? `<div class="lbl" style="margin-top:12px">Skill order</div>
-        <div class="skills">${sk.order.map(k => `<span class="sk ${k}">${k}</span>`).join('')}</div>` : ''}
-    </div>
-
-    <div class="card">
-      <h3>Augments <span class="muted">op.gg rank · Blitz tier</span></h3>
-      <div class="filters">${['all', 'prismatic', 'gold', 'silver'].map((r, i) =>
+      <h3>Augments <span class="muted">${d.augments.length} · # = op.gg rank · T = Blitz tier</span></h3>
+      <input id="aq" class="search sm" type="search" placeholder="Search augments…" autocomplete="off">
+      <div class="filters"><span class="flbl">Sort</span>${Object.entries(SORTS).map(([k, v]) =>
+        `<button class="chip ${k === sort ? 'on' : ''}" data-s="${k}">${v.label}</button>`).join('')}</div>
+      <div class="filters"><span class="flbl">Show</span>${['all', 'prismatic', 'gold', 'silver'].map((r, i) =>
         `<button class="chip ${i ? '' : 'on'}" data-f="${r}">${r[0].toUpperCase() + r.slice(1)}</button>`).join('')}</div>
       <div id="augs"></div>
       <button class="more" id="augmore"></button>
     </div>
 
     <div class="card">
-      <h3>Other core builds</h3>
-      <div class="list">${d.core.slice(1, 8).map((r, i) => `<div class="row"><span class="rank">${i + 2}</span>${r.map(itemImg).join('<span class="arrow">›</span>')}</div>`).join('')}</div>
-    </div>
-
-    <div class="card">
-      <h3>Items by popularity <span class="muted">Blitz tier on icon</span></h3>
-      <div class="ilist">${d.items.map(it => `<div class="irow">${itemImg(it, 'sm')}<span>${esc(it.name)}</span></div>`).join('')}</div>
+      <h3>Core build <span class="muted">op.gg #1</span></h3>
+      ${d.core[0] ? itemRow(d.core[0], true) : '<span class="muted">No data</span>'}
+      <div class="lbl" style="margin-top:12px">Boots</div>${itemRow(d.boots)}
     </div>
 
     <p class="legend">${[1, 2, 3, 4, 5].map(tierBadge).join('')} Blitz Mayhem tier, 1 = best ·
-      <a href="https://op.gg/lol/modes/aram-mayhem/${d.slug}/build" target="_blank" rel="noopener">op.gg</a> ·
+      <a href="https://op.gg/lol/modes/aram-mayhem/${d.slug}/augments" target="_blank" rel="noopener">op.gg</a> ·
       <a href="https://blitz.gg/lol/champions/${d.id}/aram-mayhem" target="_blank" rel="noopener">Blitz</a></p>
   `;
 
-  let filter = 'all', expanded = false;
+  let filter = 'all', expanded = false, q = '';
   const box = document.getElementById('augs'), more = document.getElementById('augmore');
   function drawAugs() {
-    const list = d.augments.filter(a => filter === 'all' || a.rarity === filter);
-    const shown = expanded ? list : list.slice(0, AUG_SHOW);
+    const ql = q.trim().toLowerCase();
+    const list = d.augments
+      .filter(a => filter === 'all' || a.rarity === filter)
+      .filter(a => !ql || a.name.toLowerCase().includes(ql) || (state.descs[a.name] || '').toLowerCase().includes(ql))
+      .sort(SORTS[sort].fn);
+    const shown = expanded || ql ? list : list.slice(0, AUG_SHOW);
     box.innerHTML = shown.map(augRow).join('') || '<span class="muted">None.</span>';
-    more.hidden = list.length <= AUG_SHOW;
+    more.hidden = shown.length === list.length && !expanded;
     more.textContent = expanded ? 'Show fewer' : `Show all ${list.length}`;
   }
   drawAugs();
   more.onclick = () => { expanded = !expanded; drawAugs(); };
   box.onclick = e => { const a = e.target.closest('.aug'); if (a) a.classList.toggle('open'); };
+  document.getElementById('aq').addEventListener('input', e => { q = e.target.value; drawAugs(); });
   app.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
     filter = b.dataset.f; expanded = false;
     app.querySelectorAll('[data-f]').forEach(x => x.classList.toggle('on', x === b));
+    drawAugs();
+  });
+  app.querySelectorAll('[data-s]').forEach(b => b.onclick = () => {
+    sort = b.dataset.s; expanded = false;
+    try { localStorage.setItem('mayhem.sort', sort); } catch { /* ignore */ }
+    app.querySelectorAll('[data-s]').forEach(x => x.classList.toggle('on', x === b));
     drawAugs();
   });
   document.getElementById('fav').onclick = () => { toggle('mayhem.favs', d.slug); renderChamp(d); };

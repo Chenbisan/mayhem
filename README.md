@@ -1,6 +1,6 @@
 # Mayhem Builds
 
-Per-champion **ARAM: Mayhem** builds in one place: core build, boots, starter, summoners, skill order, the full ranked augment list (with rarity and tier), and items by popularity.
+Per-champion **ARAM: Mayhem** augments in one place: the full augment list for each champion (op.gg rank, Blitz tier, rarity, description), sortable and searchable, plus the #1 core build and top boots.
 
 Static site (no build step, no dependencies) + a stdlib-only Python scraper that refreshes `data/` when run.
 
@@ -8,8 +8,8 @@ Static site (no build step, no dependencies) + a stdlib-only Python scraper that
 
 | What | From |
 |---|---|
-| Ranked augments, core builds, boots, starters, items, summoners, skill order | [op.gg ARAM: Mayhem](https://op.gg/lol/modes/aram-mayhem) public pages (`/build`, `/items`, `/augments`) |
-| Champion Mayhem tier, per-champion augment and item tiers (T1 = best … T5), augment descriptions | [Blitz](https://blitz.gg) ARAM: Mayhem champion page |
+| Ranked augments, #1 core build, top boots | [op.gg ARAM: Mayhem](https://op.gg/lol/modes/aram-mayhem) public pages (`/items`, `/augments`) |
+| Champion Mayhem tier, per-champion augment and boot tiers (T1 = best … T5), augment descriptions | [Blitz](https://blitz.gg) ARAM: Mayhem champion page |
 | Patch, champion list, item/champion/spell icons | Riot Data Dragon |
 | Rarity + icon fallback for augments Blitz hasn't catalogued yet | CommunityDragon `cherry-augments.json` |
 
@@ -24,7 +24,7 @@ python3 scripts/update.py                  # all champions minus config.json "ex
 python3 scripts/update.py --only jinx,ahri
 ```
 
-Then commit and push `data/`. A full run is ~700 requests at 1 s spacing (~12 min). A champion whose fetch or parse fails keeps its previous data; the run exits non-zero if more than 15% fail (usually a site layout change → fix the parser in `scripts/update.py`). The machine running it needs access to op.gg, blitz.gg, ddragon.leagueoflegends.com and raw.communitydragon.org.
+Then commit and push `data/`. A full run is ~520 requests at 1 s spacing (~9 min). A champion whose fetch or parse fails keeps its previous data; the run exits non-zero if more than 15% fail (usually a site layout change → fix the parser in `scripts/update.py`). The machine running it needs access to op.gg, blitz.gg, ddragon.leagueoflegends.com and raw.communitydragon.org.
 
 ## Skipping champions
 
