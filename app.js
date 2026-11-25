@@ -106,6 +106,7 @@ function renderChamp(d) {
   try { sort = SORTS[localStorage.getItem('mayhem.sort')] ? localStorage.getItem('mayhem.sort') : 'rank'; } catch { /* ignore */ }
 
   app.innerHTML = `
+    <a class="back" href="#/">‹ All champions</a>
     <div class="hero">
       <img src="${champIcon(d.id)}" alt="">
       <div>

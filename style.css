@@ -58,6 +58,10 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 }
 
 /* champion */
+.back {
+  display: inline-flex; align-items: center; gap: 4px; margin: 2px 0 8px; padding: 6px 12px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); font-size: 14px;
+}
 .hero { display: flex; gap: 12px; align-items: center; margin: 4px 0 12px; }
 .hero > img { width: 64px; height: 64px; border-radius: 12px; border: 2px solid var(--line); }
 .hero h1 { margin: 0; font-size: 22px; }
