@@ -2,7 +2,7 @@
 
 Per-champion **ARAM: Mayhem** builds in one place: core build, boots, starter, summoners, skill order, the full ranked augment list (with rarity and tier), and items by popularity.
 
-Static site (no build step, no dependencies) + a stdlib-only Python scraper that refreshes `data/` on a schedule.
+Static site (no build step, no dependencies) + a stdlib-only Python scraper that refreshes `data/` when run.
 
 ## Sources
 
@@ -17,16 +17,14 @@ op.gg gives order (rank), not percentages, on its public pages. Blitz tiers are 
 
 ## Updating
 
-Automatic: `.github/workflows/update.yml` runs on the 1st and 15th of each month and commits `data/` if anything changed. Run it by hand from **Actions → Update Mayhem data → Run workflow** (optionally with `only: jinx,ahri`).
-
-Manual:
+Manual, on request (no scheduled job):
 
 ```sh
 python3 scripts/update.py                  # all champions minus config.json "exclude"
 python3 scripts/update.py --only jinx,ahri
 ```
 
-A full run is ~700 requests at 1 s spacing (~25 min). A champion whose fetch or parse fails keeps its previous data; the run fails if more than 15% of champions fail (usually a site layout change → fix the parser in `scripts/update.py`).
+Then commit and push `data/`. A full run is ~700 requests at 1 s spacing (~12 min). A champion whose fetch or parse fails keeps its previous data; the run exits non-zero if more than 15% fail (usually a site layout change → fix the parser in `scripts/update.py`). The machine running it needs access to op.gg, blitz.gg, ddragon.leagueoflegends.com and raw.communitydragon.org.
 
 ## Skipping champions
 
