@@ -173,8 +173,18 @@ function renderChamp(d) {
     app.querySelectorAll('[data-s]').forEach(x => x.classList.toggle('on', x === b));
     drawAugs();
   });
-  document.getElementById('fav').onclick = () => { toggle('mayhem.favs', d.slug); renderChamp(d); };
-  document.getElementById('hide').onclick = () => { toggle('mayhem.hidden', d.slug); renderChamp(d); };
+  // Update just the buttons so augment search/sort/filter state survives.
+  const favBtn = document.getElementById('fav'), hideBtn = document.getElementById('hide');
+  favBtn.onclick = () => {
+    toggle('mayhem.favs', d.slug);
+    const on = favs().has(d.slug);
+    favBtn.classList.toggle('on', on); favBtn.textContent = on ? '★' : '☆';
+  };
+  hideBtn.onclick = () => {
+    toggle('mayhem.hidden', d.slug);
+    const on = hidden().has(d.slug);
+    hideBtn.classList.toggle('on', on); hideBtn.textContent = on ? 'Unhide' : 'Hide';
+  };
 }
 
 // ---------- routing ----------
