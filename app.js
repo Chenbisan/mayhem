@@ -92,8 +92,8 @@ function augRow(a) {
 }
 
 const SORTS = {
-  rank: { label: 'Rank', fn: (x, y) => x.rank - y.rank },
-  tier: { label: 'Tier', fn: (x, y) => (x.tier || 9) - (y.tier || 9) || x.rank - y.rank },
+  tier: { label: 'Best', fn: (x, y) => (x.tier || 9) - (y.tier || 9) || x.rank - y.rank },
+  rank: { label: 'op.gg', fn: (x, y) => x.rank - y.rank },
   rarity: { label: 'Rarity', fn: (x, y) => (RAR[y.rarity] || 0) - (RAR[x.rarity] || 0) || x.rank - y.rank },
   name: { label: 'A–Z', fn: (x, y) => x.name.localeCompare(y.name) },
 };
@@ -102,8 +102,8 @@ const augShow = () => (innerWidth >= 1400 ? 45 : innerWidth >= 900 ? 30 : 20);
 
 function renderChamp(d) {
   const fav = favs().has(d.slug), hid = hidden().has(d.slug);
-  let sort = 'rank';
-  try { sort = SORTS[localStorage.getItem('mayhem.sort')] ? localStorage.getItem('mayhem.sort') : 'rank'; } catch { /* ignore */ }
+  let sort = 'tier';
+  try { const s = localStorage.getItem('mayhem.sort2'); if (SORTS[s]) sort = s; } catch { /* ignore */ }
 
   app.innerHTML = `<div class="champ">
     <div class="c-head">
@@ -122,7 +122,7 @@ function renderChamp(d) {
     </div>
 
     <div class="card c-augs">
-      <h3>Augments <span class="muted">${d.augments.length} · # = op.gg rank · T = Blitz tier</span></h3>
+      <h3>Augments <span class="muted">${d.augments.length} · Best = Blitz tier, then op.gg rank · # = op.gg rank</span></h3>
       <input id="aq" class="search sm" type="search" placeholder="Search augments…" autocomplete="off">
       <div class="filters"><span class="flbl">Sort</span>${Object.entries(SORTS).map(([k, v]) =>
         `<button class="chip ${k === sort ? 'on' : ''}" data-s="${k}">${v.label}</button>`).join('')}</div>
@@ -169,7 +169,7 @@ function renderChamp(d) {
   });
   app.querySelectorAll('[data-s]').forEach(b => b.onclick = () => {
     sort = b.dataset.s; expanded = false;
-    try { localStorage.setItem('mayhem.sort', sort); } catch { /* ignore */ }
+    try { localStorage.setItem('mayhem.sort2', sort); } catch { /* ignore */ }
     app.querySelectorAll('[data-s]').forEach(x => x.classList.toggle('on', x === b));
     drawAugs();
   });
