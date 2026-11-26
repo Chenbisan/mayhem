@@ -35,6 +35,8 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 OPGG = "https://op.gg/lol/modes/aram-mayhem/{slug}/{page}"
 BLITZ = "https://blitz.gg/lol/champions/{id}/aram-mayhem"
 DDRAGON = "https://ddragon.leagueoflegends.com"
+CDRAGON_POOLS = ("https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/"
+                 "global/default/v1/augment-lists.json")
 CDRAGON_AUGS = ("https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/"
                 "global/default/v1/cherry-augments.json")
 AUG_DESC = {}  # augment name -> description, written to data/augments.json
@@ -324,7 +326,31 @@ def write_json(path, obj):
                     encoding="utf-8")
 
 
-def build_champion(f, champ, aug_db, cd_augs):
+class PoolFilter:
+    """Keep only augments in the live Mayhem pool (Riot's augment-lists.json).
+
+    Riot ships several Mayhem pools (KIWI, KIWI_JADE, ...); config.json "pool"
+    names the one in rotation. Augments CommunityDragon can't identify are kept.
+    """
+
+    def __init__(self, pool_ids, cherry):
+        self.pool = pool_ids  # set of lower-case augmentNameIds, or None = keep all
+        self.ids = {}
+        for a in cherry:
+            nid = a.get("augmentNameId", "").lower()
+            for k in (a.get("nameTRA", "").lower(),
+                      a.get("augmentLargeIconPath", "").rsplit("/", 1)[-1].lower()):
+                if k:
+                    self.ids.setdefault(k, set()).add(nid)
+
+    def keep(self, name, icon):
+        if self.pool is None:
+            return True
+        ids = self.ids.get(name.lower(), set()) | self.ids.get(icon.rsplit("/", 1)[-1].lower(), set())
+        return not ids or bool(ids & self.pool)
+
+
+def build_champion(f, champ, aug_db, cd_augs, pool):
     slug = champ["id"].lower()
     items = parse_opgg_items(f.get(OPGG.format(slug=slug, page="items")))
     augs = parse_opgg_augments(f.get(OPGG.format(slug=slug, page="augments")))
@@ -343,6 +369,7 @@ def build_champion(f, champ, aug_db, cd_augs):
     by_name = {v.get("displayName", "").lower(): k for k, v in aug_db.items()}
     by_icon = {v.get("iconLarge", "").lower(): k for k, v in aug_db.items()}
 
+    augs = [a for a in augs if pool.keep(a["name"], a["icon"])]
     aug_out = []
     for rank, a in enumerate(augs, 1):
         key = by_name.get(a["name"].lower()) or by_icon.get(a["icon"].rsplit("/", 1)[-1].lower())
@@ -405,19 +432,30 @@ def main():
 
     aug_db = {}
     cd_augs = {}
+    cherry = []
     try:  # CommunityDragon: rarity/ids for augments Blitz hasn't catalogued yet
-        for a in f.json(CDRAGON_AUGS):
+        cherry = f.json(CDRAGON_AUGS)
+        for a in cherry:
             cd_augs.setdefault(a.get("nameTRA", "").lower(), a)
             cd_augs.setdefault(a.get("augmentLargeIconPath", "").rsplit("/", 1)[-1].lower(), a)
     except Exception as e:  # noqa: BLE001
         print(f"cdragon augments: {e}", file=sys.stderr)
+    pool_name = cfg.get("pool", "KIWI")
+    pool_ids = None
+    try:
+        lists = {g["modeName"]: g["augmentList"] for g in f.json(CDRAGON_POOLS)}
+        pool_ids = {p.rsplit("/", 1)[-1].lower() for p in lists[pool_name]}
+        print(f"Augment pool {pool_name}: {len(pool_ids)} augments")
+    except Exception as e:  # noqa: BLE001 - never drop augments on a lookup failure
+        print(f"augment pool {pool_name!r} unavailable, keeping all augments: {e}", file=sys.stderr)
+    pool = PoolFilter(pool_ids if cherry else None, cherry)
     failed, done = [], 0
     t0 = time.time()
     for i, c in enumerate(targets, 1):
         slug = c["id"].lower()
         print(f"[{i}/{len(targets)}] {c['name']}", flush=True)
         try:
-            data = build_champion(f, c, aug_db, cd_augs)
+            data = build_champion(f, c, aug_db, cd_augs, pool)
             write_json(CHAMP_DIR / f"{slug}.json", data)
             done += 1
         except Exception as e:  # noqa: BLE001 - keep previous data, report

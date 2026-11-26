@@ -1,1 +1,5 @@
-{"exclude": [], "delay": 1.0}
+{
+  "exclude": [],
+  "delay": 1.0,
+  "pool": "KIWI"
+}
