@@ -81,7 +81,7 @@ function renderHome(q = '') {
 // ---------- champion ----------
 function augRow(a) {
   return `<div class="aug ${a.rarity || ''}" data-rarity="${a.rarity || ''}">
-    <span class="rank">${a.rank}</span>
+    <span class="rank" title="op.gg rank among ${esc(a.rarity || 'all')} augments (overall #${a.rank})">${a.rrank || a.rank}</span>
     <img loading="lazy" src="${esc(a.icon)}" alt=""
       ${a.icon2 ? `onerror="this.onerror=null;this.src='${esc(a.icon2)}'"` : ''}>
     <div class="body">
@@ -122,7 +122,7 @@ function renderChamp(d) {
     </div>
 
     <div class="card c-augs">
-      <h3>Augments <span class="muted">${d.augments.length} · Best = Blitz tier, then op.gg rank · # = op.gg rank</span></h3>
+      <h3>Augments <span class="muted">${d.augments.length} · Best = Blitz tier, then op.gg rank · # = op.gg rank within its rarity</span></h3>
       <input id="aq" class="search sm" type="search" placeholder="Search augments…" autocomplete="off">
       <div class="filters"><span class="flbl">Sort</span>${Object.entries(SORTS).map(([k, v]) =>
         `<button class="chip ${k === sort ? 'on' : ''}" data-s="${k}">${v.label}</button>`).join('')}</div>
@@ -145,6 +145,12 @@ function renderChamp(d) {
     </div>
   </div>`;
 
+  // op.gg rank within rarity: rolls offer 3 of the same rarity, and op.gg's
+  // overall order ranks Prismatics lower simply because they're offered less.
+  const seen = {};
+  [...d.augments].sort((x, y) => x.rank - y.rank).forEach(a => {
+    const r = a.rarity || '?'; a.rrank = (seen[r] = (seen[r] || 0) + 1);
+  });
   let filter = 'all', expanded = false, q = '';
   const box = document.getElementById('augs'), more = document.getElementById('augmore');
   function drawAugs() {
