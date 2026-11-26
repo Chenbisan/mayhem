@@ -81,7 +81,7 @@ function renderHome(q = '') {
 // ---------- champion ----------
 function augRow(a) {
   return `<div class="aug ${a.rarity || ''}" data-rarity="${a.rarity || ''}">
-    <span class="rank" title="op.gg rank among ${esc(a.rarity || 'all')} augments (overall #${a.rank})">${a.rrank || a.rank}</span>
+    <span class="rank" title="op.gg popularity rank among ${esc(a.rarity || 'all')} augments (overall #${a.rank}); not a quality rating">${a.rrank || a.rank}</span>
     <img loading="lazy" src="${esc(a.icon)}" alt=""
       ${a.icon2 ? `onerror="this.onerror=null;this.src='${esc(a.icon2)}'"` : ''}>
     <div class="body">
@@ -93,7 +93,7 @@ function augRow(a) {
 
 const SORTS = {
   tier: { label: 'Best', fn: (x, y) => (x.tier || 9) - (y.tier || 9) || x.rank - y.rank },
-  rank: { label: 'op.gg', fn: (x, y) => x.rank - y.rank },
+  rank: { label: 'Popular', fn: (x, y) => x.rank - y.rank },
   rarity: { label: 'Rarity', fn: (x, y) => (RAR[y.rarity] || 0) - (RAR[x.rarity] || 0) || x.rank - y.rank },
   name: { label: 'A–Z', fn: (x, y) => x.name.localeCompare(y.name) },
 };
@@ -122,7 +122,7 @@ function renderChamp(d) {
     </div>
 
     <div class="card c-augs">
-      <h3>Augments <span class="muted">${d.augments.length} · Best = Blitz tier, then op.gg rank · # = op.gg rank within its rarity</span></h3>
+      <h3>Augments <span class="muted">${d.augments.length} · Best = Blitz tier (what wins) · # = op.gg popularity within its rarity</span></h3>
       <input id="aq" class="search sm" type="search" placeholder="Search augments…" autocomplete="off">
       <div class="filters"><span class="flbl">Sort</span>${Object.entries(SORTS).map(([k, v]) =>
         `<button class="chip ${k === sort ? 'on' : ''}" data-s="${k}">${v.label}</button>`).join('')}</div>
