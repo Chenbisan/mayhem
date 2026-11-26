@@ -85,7 +85,8 @@ function augRow(a) {
       ${a.icon2 ? `onerror="this.onerror=null;this.src='${esc(a.icon2)}'"` : ''}>
     <div class="body">
       <div class="nm">${esc(a.name)} ${tierBadge(a.tier)}
-        ${a.rarity ? `<span class="rar ${a.rarity}">${a.rarity[0].toUpperCase() + a.rarity.slice(1)}</span>` : ''}</div>
+        ${a.rarity ? `<span class="rar ${a.rarity}">${a.rarity[0].toUpperCase() + a.rarity.slice(1)}</span>` : ''}
+        <span class="og" title="op.gg's order among ${esc(a.rarity || 'all')} augments for this champion (overall #${a.rank})">op.gg #${a.rrank || a.rank}</span></div>
       ${state.descs[a.name] ? `<div class="desc">${esc(state.descs[a.name])}</div>` : ''}
     </div></div>`;
 }
@@ -93,8 +94,8 @@ function augRow(a) {
 const byName = (x, y) => x.name.localeCompare(y.name);
 const byTier = (x, y) => (x.tier || 9) - (y.tier || 9);
 const SORTS = {
-  tier: { label: 'Best', fn: (x, y) => byTier(x, y) || byName(x, y) },
-  rarity: { label: 'Rarity', fn: (x, y) => (RAR[y.rarity] || 0) - (RAR[x.rarity] || 0) || byTier(x, y) || byName(x, y) },
+  tier: { label: 'Best', fn: (x, y) => byTier(x, y) || x.rank - y.rank },
+  rarity: { label: 'Rarity', fn: (x, y) => (RAR[y.rarity] || 0) - (RAR[x.rarity] || 0) || byTier(x, y) || x.rank - y.rank },
   name: { label: 'A–Z', fn: (x, y) => x.name.localeCompare(y.name) },
 };
 const RAR = { prismatic: 3, gold: 2, silver: 1 };
@@ -123,7 +124,7 @@ function renderChamp(d) {
     </div>
 
     <div class="card c-augs">
-      <h3>Augments <span class="muted">${d.augments.length} · grouped by Blitz tier for this champion</span></h3>
+      <h3>Augments <span class="muted">${d.augments.length} · grouped by Blitz tier · op.gg # breaks ties</span></h3>
       <input id="aq" class="search sm" type="search" placeholder="Search augments…" autocomplete="off">
       <div class="filters"><span class="flbl">Sort</span>${Object.entries(SORTS).map(([k, v]) =>
         `<button class="chip ${k === sort ? 'on' : ''}" data-s="${k}">${v.label}</button>`).join('')}</div>
@@ -146,6 +147,11 @@ function renderChamp(d) {
     </div>
   </div>`;
 
+  // op.gg's order within each rarity (a roll offers 3 of the same rarity).
+  const seen = {};
+  [...d.augments].sort((x, y) => x.rank - y.rank).forEach(a => {
+    const r = a.rarity || '?'; a.rrank = (seen[r] = (seen[r] || 0) + 1);
+  });
   let filter = 'all', expanded = false, q = '';
   const box = document.getElementById('augs'), more = document.getElementById('augmore');
   function drawAugs() {
